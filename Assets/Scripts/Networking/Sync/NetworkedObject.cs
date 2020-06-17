@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Networking
 {
-    public class NetworkedObject : MonoBehaviourPun, INetworkedObject
+    public abstract class NetworkedObject : MonoBehaviourPun, INetworkedObject
     {
 
         protected virtual void Awake()
@@ -19,8 +19,6 @@ namespace Networking
             }
         }
 
-        public virtual void SyncState(bool isWriting, Queue<object> data)
-        {
-        }
+        public abstract void RpcSyncState(bool isWriting, Queue<object> data);
     }
 }

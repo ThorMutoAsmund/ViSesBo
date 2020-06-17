@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Multiplayer
+namespace Networking
 {
     /// <summary>
     /// Interfaces that merges INotifyPropertyChanged and ISyncable

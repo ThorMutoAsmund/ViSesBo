@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace Multiplayer
+namespace Networking
 {
     /// <summary>
     /// Class that allows a field to be automatically synchronized in a multiplayer setting

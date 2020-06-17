@@ -1,5 +1,6 @@
 ﻿using Networking;
 using Photon.Pun;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace VSB
@@ -15,6 +16,10 @@ namespace VSB
             {
                 Object.Destroy(this.gameObject);
             }
+        }
+        [PunRPC]
+        public override void RpcSyncState(bool isWriting, Queue<object> dataQueue)
+        {
         }
     }
 }

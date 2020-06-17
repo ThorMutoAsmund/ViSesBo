@@ -8,7 +8,7 @@ namespace Networking
 {
     public interface INetworkedObject
     {
-        void SyncState(bool isWriting, Queue<object> data);
+        void RpcSyncState(bool isWriting, Queue<object> dataQueue);
     }
 
     //public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)

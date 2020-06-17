@@ -178,6 +178,25 @@ namespace Networking
                 this.photonView.RPC(nameof(RpcSpawnObjects), player, resources, positions, rotations, viewIds);
 
                 // Sync all networked objects
+                foreach (var kvp in networkedObjectList)
+                {
+                    var networkedObject = kvp.Value;
+                    if (networkedObject == null || networkedObject.Equals(null) || !(networkedObject is MonoBehaviour monoBehaviour))
+                    {
+                        continue;
+                    }
+
+                    var photonView = monoBehaviour.GetComponent<PhotonView>();
+
+                    if (!photonView)
+                    {
+                        continue;
+                    }
+
+                    var dataQueue = new Queue<object>();
+                    networkedObject.RpcSyncState(true, dataQueue);
+                    photonView.RPC(nameof(INetworkedObject.RpcSyncState), player, false, dataQueue);
+                }
 
                 // Tell player to enable network communication
                 this.photonView.RPC(nameof(RpcTurnOn), player);

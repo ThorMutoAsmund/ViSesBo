@@ -1,4 +1,4 @@
-﻿namespace Multiplayer
+﻿namespace Networking
 {
     public interface ISerializable
     {

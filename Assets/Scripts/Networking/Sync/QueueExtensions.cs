@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 
-namespace Multiplayer
+namespace Networking
 {
     public static class QueueExtensions
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Multiplayer
+namespace Networking
 {
     /// <summary>
     /// Attribute used to mark a property as being synced
