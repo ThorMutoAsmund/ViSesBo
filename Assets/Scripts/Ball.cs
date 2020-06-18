@@ -22,10 +22,8 @@ namespace VSB
             };
         }
 
-        protected override void Update()
+        private void Update()
         {
-            base.Update();
-
             this.timeSinceCreation += Time.deltaTime;
             if (this.transform.position.y < 0f || this.timeSinceCreation > 10f)
             {

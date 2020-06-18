@@ -37,10 +37,8 @@ namespace VSB
         }
 
         // Update is called once per frame
-        protected override void Update()
+        private void Update()
         {
-            base.Update();
-
             if (this.photonView.IsMine)
             {
                 this.t += Time.deltaTime * 0.2f;

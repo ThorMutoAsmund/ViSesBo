@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Photon.Pun;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -7,10 +9,23 @@ using UnityEngine;
 namespace Networking
 {
     /// <summary>
-    /// Class which aims in syncing the fields and properties of a MultiplayerGameObject
+    /// Class which aims in syncing the fields and properties of an INetworkedObject
     /// </summary>
-    public class AutoSync : IChangeTracking, INotifyPropertyChanged
+    public class AutoSync : MonoBehaviourPun, IChangeTracking, INotifyPropertyChanged
     {
+        /// <summary>
+        /// The component to sync
+        /// </summary>
+        public UnityEngine.Object ObjectToSync
+        {
+            get => this.objectToSync;
+            set
+            {
+                this.objectToSync = value;
+                ReadProperties();
+            }
+        }
+
         /// <summary>
         /// Returns true if there are changes
         /// </summary>
@@ -21,10 +36,12 @@ namespace Networking
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public event EventHandler<string[]> SyncCompleted;
+
         /// <summary>
         /// Properties and fields that are being synced hashed by their property name
         /// </summary>
-        private Dictionary<string, ISerializable> syncables;
+        private Dictionary<string, ISerializable> syncables = new Dictionary<string, ISerializable>();
 
         /// <summary>
         /// Stores the last synced values so an equation can be made to see if they have changed
@@ -37,45 +54,53 @@ namespace Networking
         private HashSet<string> dirtyBuffer = new HashSet<string>();
 
         /// <summary>
-        /// Create an instance given the component to be synced
+        /// Reusable data queue for synchronization
         /// </summary>
-        /// <param name="componentToSync"></param>
-        /// <returns></returns>
-        public static AutoSync Create(UnityEngine.Component componentToSync)
-        {
-            return componentToSync ? new AutoSync(componentToSync) : default;
-        }
+        private Queue<object> partialDataQueue = new Queue<object>();
+
+        private UnityEngine.Object objectToSync;
+ 
+
+        ///// <summary>
+        ///// Create an instance given the component to be synced
+        ///// </summary>
+        ///// <param name="componentToSync"></param>
+        ///// <returns></returns>
+        //public static AutoSync Create(UnityEngine.Component componentToSync)
+        //{
+        //    return componentToSync ? new AutoSync(componentToSync, componentToSync.GetComponent<PhotonView>()) : default;
+        //}
+
+        ///// <summary>
+        ///// Create an instance given a scriptable object to be synced
+        ///// </summary>
+        ///// <param name="scriptableObjectToSync"></param>
+        ///// <returns></returns>
+        //public static AutoSync Create(ScriptableObject scriptableObjectToSync, PhotonView photonView)
+        //{
+        //    return scriptableObjectToSync ? new AutoSync(scriptableObjectToSync, photonView) : default;
+        //}
 
         /// <summary>
-        /// Create an instance given a scriptable object to be synced
+        /// Read properties of assigned object
         /// </summary>
-        /// <param name="scriptableObjectToSync"></param>
-        /// <returns></returns>
-        public static AutoSync Create(ScriptableObject scriptableObjectToSync)
-        {
-            return scriptableObjectToSync ? new AutoSync(scriptableObjectToSync) : default;
-        }
-
-        /// <summary>
-        /// Constructor is private. Use the static Create method instead
-        /// </summary>
-        private AutoSync(Object objectToSync)
+        private void ReadProperties()
         {
             // Read normal CLR properties with Synced attribute
-            var syncedProperties = objectToSync.GetType().GetProperties().
+            var syncedProperties = this.objectToSync.GetType().GetProperties().
                 Where(prop => prop.IsDefined(typeof(SyncedAttribute), false));
 
             // Create hash table
-            this.syncables = syncedProperties.ToDictionary(prop => prop.Name, prop => PropertyWriter.Create(objectToSync, prop));
+            this.syncables = syncedProperties.ToDictionary(prop => prop.Name, prop => PropertyWriter.Create(this.objectToSync, prop));
 
             // Read all fields with Synced attribute that implement ISyncableField
-            var syncedFields = objectToSync.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).
+            var syncedFields = this.objectToSync.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).
                 Where(field => field.IsDefined(typeof(SyncedAttribute), false) && typeof(ISyncableField).IsAssignableFrom(field.FieldType));
 
             // Add synced fields to syncables list and register their PropertyChanged
             foreach (var field in syncedFields)
             {
-                if (field.GetValue(objectToSync) is ISyncableField syncableField)
+                if (field.GetValue(this.objectToSync) is ISyncableField syncableField)
                 {
                     this.syncables[field.Name] = syncableField;
 
@@ -89,7 +114,29 @@ namespace Networking
                 }
             }
         }
-        
+
+        /// <summary>
+        /// Should be called in the owning component's Update method
+        /// </summary>
+        private void Update()
+        {
+            if (this.photonView.IsMine && this.IsChanged)
+            {
+                var keys = PartialStateSync(true, this.partialDataQueue);
+                AcceptChanges();
+
+                var dataArray = this.partialDataQueue.ToArray();
+                this.partialDataQueue.Clear();
+
+                if (this.photonView)
+                {
+                    this.photonView.RPC(nameof(this.RpcSendPartialState), RpcTarget.Others, (object)dataArray);
+                }
+
+                this.SyncCompleted(this, keys);
+            }
+        }
+
         /// <summary>
         /// Clears the dirty buffer (comes from IChangeTracking)
         /// </summary>
@@ -172,6 +219,17 @@ namespace Networking
             this.valueStore[propertyName] = value;
             this.dirtyBuffer.Add(propertyName);
             this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        [PunRPC]
+        protected virtual void RpcSendPartialState(object[] dataArray)
+        {
+            var dataQueue = new Queue<object>(dataArray);
+
+            var keys = this.PartialStateSync(false, dataQueue);
+            this.AcceptChanges();
+
+            this.SyncCompleted(this, keys);
         }
     }
 }
