@@ -1,8 +1,7 @@
-﻿using Networking;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Reflection;
 
-namespace Multiplayer
+namespace Networking
 {
     /// <summary>
     /// Class that wraps a property and implements ISyncable so the property can be synced in a multiplayer setting

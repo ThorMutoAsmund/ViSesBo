@@ -1,11 +1,10 @@
-﻿using Networking;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace Multiplayer
+namespace Networking
 {
     /// <summary>
     /// Class which aims in syncing the fields and properties of a MultiplayerGameObject

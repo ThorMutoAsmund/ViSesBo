@@ -18,8 +18,6 @@ namespace VSB
         private float t = 0f;
         private bool textSet;
 
-        public ISyncedProperty<string> Angle => this.plateText;
-
         [Synced] protected readonly SubscriptionField<string> plateText = SubscriptionField<string>.Create(nameof(plateText));
 
         protected override void Awake()
@@ -39,8 +37,10 @@ namespace VSB
         }
 
         // Update is called once per frame
-        void Update()
+        protected override void Update()
         {
+            base.Update();
+
             if (this.photonView.IsMine)
             {
                 this.t += Time.deltaTime * 0.2f;
@@ -60,16 +60,17 @@ namespace VSB
         [PunRPC]
         public override void RpcSyncState(bool isWriting, Queue<object> dataQueue)
         {
-            if (isWriting)
-            {
-                Debug.Log("+++ Writing to queue");
-                dataQueue.Enqueue(this.plateText.Value);
-            }
-            else
-            {
-                Debug.Log("+++ Reading from queue");
-                this.plateText.Value = dataQueue.Dequeue<string>();
-            }
+            base.RpcSyncState(isWriting, dataQueue);
+            //if (isWriting)
+            //{
+            //    Debug.Log("+++ Writing to queue");
+            //    dataQueue.Enqueue(this.plateText.Value);
+            //}
+            //else
+            //{
+            //    Debug.Log("+++ Reading from queue");
+            //    this.plateText.Value = dataQueue.Dequeue<string>();
+            //}
         }
     }
 }

@@ -17,6 +17,8 @@ namespace Networking
         public static readonly int NetworkedSceneViewId = 998;
 
         private static Dictionary<int, INetworkedObject> networkedObjectList = new Dictionary<int, INetworkedObject>();
+        private Dictionary<Object, System.Action> connectionHandlers = new Dictionary<Object, System.Action>();
+        private Dictionary<Object, System.Action> joinedRoomHandlers = new Dictionary<Object, System.Action>();
 
         public static void StartMultiplayer(int sendRate = 40, int serializationRate = 40, float minimalTimeScaleToDispatchInFixedUpdate = -1f)
         {
@@ -33,7 +35,7 @@ namespace Networking
                 //PhotonNetwork.PrecisionForFloatSynchronization = 0.002f;
                 //PhotonNetwork.PrecisionForQuaternionSynchronization = 0.2f;
                 //PhotonNetwork.PrecisionForVectorSynchronization = 0.0000099f;                       
-            }
+            } 
         }
 
         public static void EndMultiplayer()
@@ -79,10 +81,6 @@ namespace Networking
         {
             Debug.Log("== Disconnected");
         }
-
-        private Dictionary<Object, System.Action> connectionHandlers = new Dictionary<Object, System.Action>();
-        private Dictionary<Object, System.Action> joinedRoomHandlers = new Dictionary<Object, System.Action>();
-        
 
         public void WhenConnectedToMaster(Object caller, System.Action callBack)
         {
