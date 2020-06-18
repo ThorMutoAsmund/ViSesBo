@@ -121,12 +121,12 @@ namespace Networking
         [PunRPC]
         private void RpcSpawnObjects(string[] resources, Vector3[] positions, Quaternion[] rotations, int[] viewIds)
         {
-            if (VSB.Scene.Instance)
+            if (NetworkedScene.NetworkSceneInstance)
             {
                 Debug.Log($"== Spawning {resources.Length} objects");
                 for (int i = 0; i < resources.Length; ++i)
                 {
-                    var gameObject = VSB.Scene.Instance.RpcInstantiate(resources[i], positions[i], rotations[i],  ViewIdAllocationMethod.Specific, viewIds[i]);
+                    var gameObject = NetworkedScene.NetworkSceneInstance.RpcInstantiate(resources[i], positions[i], rotations[i],  ViewIdAllocationMethod.Specific, viewIds[i]);
                 }
             }
             else
@@ -168,10 +168,10 @@ namespace Networking
         {
             Debug.Log($"== Actor {actorNumber} has loaded scene");
             var player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
-            if (player != null && VSB.Scene.Instance)
+            if (player != null && NetworkedScene.NetworkSceneInstance)
             {
                 // Instantiate all spawned objects
-                var (resources, positions, rotations, viewIds) = VSB.Scene.Instance.GetSpawnedObjects();
+                var (resources, positions, rotations, viewIds) = NetworkedScene.NetworkSceneInstance.GetSpawnedObjects();
                 Debug.Log($"== Requesting actor {actorNumber} to spawn {resources.Count()} networked objects");
                 this.photonView.RPC(nameof(RpcSpawnObjects), player, resources, positions, rotations, viewIds);
 
