@@ -7,11 +7,12 @@ namespace VSB
 {
     public class Ball : NetworkedObject
     {
-        private float timeSinceCreation = 0f;
-        private float lastSecond = 0f;
         public ISyncedProperty<float> Size => this.size;
 
         [Synced] protected readonly SubscriptionField<float> size = SubscriptionField<float>.Create(nameof(size), 5f);
+
+        private float timeSinceCreation = 0f;
+        private float lastSecond = 0f;
 
         private void Start()
         {
