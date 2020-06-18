@@ -1,9 +1,6 @@
 ﻿using Networking;
 using Photon.Pun;
 using Photon.Realtime;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -19,9 +16,9 @@ namespace VSB
         {
             base.Awake();
 
-            this.Terrain = this.GetComponentInChildren<Terrain>();
+            VSBApplication.Start();
 
-            NetworkManager.StartMultiplayer();
+            this.Terrain = this.GetComponentInChildren<Terrain>();
         }
 
         protected override void Start()
@@ -31,13 +28,18 @@ namespace VSB
             NetworkManager.Instance.WhenConnectedToMaster(this, () =>
             {
                 var roomName = System.Guid.NewGuid().ToString().Substring(0, 8);
-                PhotonNetwork.CreateRoom(roomName, new RoomOptions()
+                PhotonNetwork.CreateRoom(roomName, roomOptions: new RoomOptions()
                 {
+                    MaxPlayers = 0,
+                    PlayerTtl = 0,
+                    EmptyRoomTtl = 3000,
+                    PublishUserId = true,
+                    CleanupCacheOnLeave = true
                 });
             });
 
             // Fade in
-            Networking.ScreenFade.FadeIn();
+            ScreenFade.FadeIn();
         }
 
         private void Update()
@@ -53,6 +55,12 @@ namespace VSB
             else if (PhotonNetwork.IsMasterClient && Input.GetKeyDown(KeyCode.Alpha2))
             {
                 LoadScene("ConcreteScene");
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                PhotonNetwork.LeaveRoom();
+                PhotonNetwork.JoinLobby();
             }
         }
 
@@ -102,7 +110,7 @@ namespace VSB
         {
             Networking.ScreenFade.FadeOut(whenDone: () =>
             {
-                SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene());
+                //SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene());
 
                 PhotonNetwork.LeaveRoom();
                 NetworkManager.Instance.WhenConnectedToMaster(this, () =>
