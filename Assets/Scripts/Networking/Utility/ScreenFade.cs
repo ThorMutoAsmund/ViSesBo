@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-namespace Multiplayer
+namespace Networking
 {
     public class ScreenFade : MonoBehaviour
     {

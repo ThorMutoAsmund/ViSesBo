@@ -3,11 +3,11 @@ using Photon.Pun;
 using Photon.Realtime;
 using System.Collections.Generic;
 
-namespace Multiplayer
+namespace Networking
 {
     // Mirror class of MonoBehaviourPunCallbacks
-    public abstract class MultiplayerGameObjectPunCallbacks : MultiplayerGameObject, IConnectionCallbacks, IMatchmakingCallbacks, IInRoomCallbacks, ILobbyCallbacks, IWebRpcCallback
-    {
+    public abstract class NetworkedObjectPunCallbacks : NetworkedObject, IConnectionCallbacks, IMatchmakingCallbacks, IInRoomCallbacks, ILobbyCallbacks, IWebRpcCallback, IErrorInfoCallback
+    {        
         public virtual void OnEnable()
         {
             PhotonNetwork.AddCallbackTarget(this);
@@ -41,5 +41,6 @@ namespace Multiplayer
         public virtual void OnCustomAuthenticationFailed(string debugMessage) { }
         public virtual void OnWebRpcResponse(OperationResponse response) { }
         public virtual void OnLobbyStatisticsUpdate(List<TypedLobbyInfo> lobbyStatistics) { }
+        public virtual void OnErrorInfo(ErrorInfo errorInfo) { }
     }
 }

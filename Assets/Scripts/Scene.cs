@@ -37,7 +37,7 @@ namespace VSB
             });
 
             // Fade in
-            Multiplayer.ScreenFade.FadeIn();
+            Networking.ScreenFade.FadeIn();
         }
 
         private void Update()
@@ -100,7 +100,7 @@ namespace VSB
 
         private void JoinRandomRoom()
         {
-            Multiplayer.ScreenFade.FadeOut(whenDone: () =>
+            Networking.ScreenFade.FadeOut(whenDone: () =>
             {
                 SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene());
 
@@ -114,7 +114,7 @@ namespace VSB
 
         private void LoadScene(string sceneName)
         {
-            Multiplayer.ScreenFade.FadeOut(whenDone: () =>
+            Networking.ScreenFade.FadeOut(whenDone: () =>
             {
                 NetworkManager.Instance.LoadScene(sceneName);
             });

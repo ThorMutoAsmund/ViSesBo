@@ -122,6 +122,5 @@ namespace Multiplayer
         /// </summary>
         /// <param name="input"></param>
         public static implicit operator SubscriptionClass<TValue>((string Name, TValue Value) input) => new SubscriptionClass<TValue>(input.Name, input.Value);
-
     }
 }

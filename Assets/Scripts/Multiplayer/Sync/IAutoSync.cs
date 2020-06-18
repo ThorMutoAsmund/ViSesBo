@@ -8,6 +8,6 @@ namespace Multiplayer
     /// </summary>
     public interface IAutoSync
     {
-        MultiplayerAutoSync AutoSync { get; }
+        AutoSync AutoSync { get; }
     }
 }

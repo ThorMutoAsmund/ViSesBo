@@ -9,7 +9,7 @@ namespace Networking
     /// <summary>
     /// Class which aims in syncing the fields and properties of a MultiplayerGameObject
     /// </summary>
-    public class MultiplayerAutoSync : IChangeTracking, INotifyPropertyChanged
+    public class AutoSync : IChangeTracking, INotifyPropertyChanged
     {
         /// <summary>
         /// Returns true if there are changes
@@ -41,9 +41,9 @@ namespace Networking
         /// </summary>
         /// <param name="componentToSync"></param>
         /// <returns></returns>
-        public static MultiplayerAutoSync Create(UnityEngine.Component componentToSync)
+        public static AutoSync Create(UnityEngine.Component componentToSync)
         {
-            return componentToSync ? new MultiplayerAutoSync(componentToSync) : default;
+            return componentToSync ? new AutoSync(componentToSync) : default;
         }
 
         /// <summary>
@@ -51,15 +51,15 @@ namespace Networking
         /// </summary>
         /// <param name="scriptableObjectToSync"></param>
         /// <returns></returns>
-        public static MultiplayerAutoSync Create(ScriptableObject scriptableObjectToSync)
+        public static AutoSync Create(ScriptableObject scriptableObjectToSync)
         {
-            return scriptableObjectToSync ? new MultiplayerAutoSync(scriptableObjectToSync) : default;
+            return scriptableObjectToSync ? new AutoSync(scriptableObjectToSync) : default;
         }
 
         /// <summary>
         /// Constructor is private. Use the static Create method instead
         /// </summary>
-        private MultiplayerAutoSync(Object objectToSync)
+        private AutoSync(Object objectToSync)
         {
             // Read normal CLR properties with Synced attribute
             var syncedProperties = objectToSync.GetType().GetProperties().

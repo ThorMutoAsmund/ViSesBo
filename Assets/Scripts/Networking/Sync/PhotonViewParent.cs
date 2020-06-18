@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Multiplayer
+namespace Networking
 {
-    //[RequireComponent(typeof(PhotonView))]
     public class PhotonViewParent : MonoBehaviour, IPunObservable
     {
 #pragma warning disable 0649        

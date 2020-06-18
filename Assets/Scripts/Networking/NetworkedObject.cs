@@ -10,7 +10,7 @@ namespace Networking
 {
     public abstract class NetworkedObject : MonoBehaviourPun, INetworkedObject
     {
-        protected MultiplayerAutoSync AutoSync { get; private set; }
+        protected AutoSync AutoSync { get; private set; }
 
         private Queue<object> partialDataQueue = new Queue<object>();
 
@@ -22,7 +22,7 @@ namespace Networking
                 NetworkManager.Register(this);
             }
 
-            this.AutoSync = MultiplayerAutoSync.Create(this);
+            this.AutoSync = AutoSync.Create(this);
         }
 
         protected virtual void Update()
@@ -62,6 +62,7 @@ namespace Networking
         }
 
 
+        [PunRPC]
         public virtual void RpcSyncState(bool isWriting, Queue<object> dataQueue)
         {
             this.AutoSync.FullStateSync(isWriting, dataQueue);

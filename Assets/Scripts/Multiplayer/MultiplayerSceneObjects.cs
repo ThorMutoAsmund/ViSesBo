@@ -2,9 +2,9 @@
 
 namespace Multiplayer
 {
-    public class MultiplayerSceneObjects : MonoBehaviour
-    {
-        public MultiplayerGameObject[] SceneMultiplayerGameObjects;
-        public int MinimumViewID = 1000;
-    }
+    //public class MultiplayerSceneObjects : MonoBehaviour
+    //{
+    //    public MultiplayerGameObject[] SceneMultiplayerGameObjects;
+    //    public int MinimumViewID = 1000;
+    //}
 }

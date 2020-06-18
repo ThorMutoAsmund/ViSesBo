@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Multiplayer
+namespace Networking
 {
     public enum TransformGlobality
     {
@@ -202,7 +202,7 @@ namespace Multiplayer
                     if (this.currentParent != this.transform.parent)
                     {
                         this.currentParent = this.transform.parent;
-                        this.currentParentHash = MultiplayerSessionScene.Instance.HashFromTransform(this.currentParent);
+                        this.currentParentHash = NetworkedScene.NetworkSceneInstance.HashFromTransform(this.currentParent);
                         //Debug.Log($"New parent {(this.currentParent ? NameWithPath(this.currentParent.gameObject) : "none")} with hash {this.currentParentHash}");
                     }
                     stream.SendNext(this.currentParentHash);
@@ -237,7 +237,7 @@ namespace Multiplayer
                     var parentHash = (Int64)stream.ReceiveNext();
                     if (this.currentParentHash != parentHash)
                     {
-                        this.currentParent = MultiplayerSessionScene.Instance.TransformFromHash(parentHash);
+                        this.currentParent = NetworkedScene.NetworkSceneInstance.TransformFromHash(parentHash);
                         this.transform.SetParent(this.currentParent);
                         this.currentParentHash = parentHash;
                         //Debug.Log($"{NameWithPath(this.gameObject)} Parented to {(this.currentParent ? NameWithPath(this.currentParent.gameObject) : "none")} using hash {parentHash}");
