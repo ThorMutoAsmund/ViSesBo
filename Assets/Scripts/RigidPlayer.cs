@@ -37,6 +37,11 @@ namespace VSB
         private Rigidbody body;
         private bool isgrounded;
 
+        private void Awake()
+        {
+            this.photonView.Group = 1;
+        }
+
         private void Start()
         {
             this.lookDownMax = 90f - this.lookMargin;
@@ -50,9 +55,9 @@ namespace VSB
                 this.halfHeight = this.collider.height / 2f;
             }
 
-            if (Scene.Instance?.Terrain)
+            if (GameScene.Instance?.Terrain)
             {
-                var terrainHeight = Scene.Instance?.Terrain.SampleHeight(this.transform.position);
+                var terrainHeight = GameScene.Instance?.Terrain.SampleHeight(this.transform.position);
                 this.transform.position = this.transform.position.With(y: terrainHeight + this.startHeightOverTerrain);
             }
 
@@ -182,9 +187,9 @@ namespace VSB
                 }
             }
 
-            if (Scene.Instance?.Terrain)
+            if (GameScene.Instance?.Terrain)
             {
-                var terrainHeight = Scene.Instance?.Terrain.SampleHeight(this.transform.position);
+                var terrainHeight = GameScene.Instance?.Terrain.SampleHeight(this.transform.position);
                 if (this.transform.position.y - this.halfHeight < terrainHeight - this.terrainYMargin)
                 {
                     this.transform.position = this.transform.position.With(y: terrainHeight + this.halfHeight);
@@ -199,16 +204,16 @@ namespace VSB
 
         private void SpawnBall()
         {
-            if (Scene.Instance)
+            if (GameScene.Instance)
             {
                 if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
                 {
-                    Scene.Instance.InstantiateSceneObject("SoccerBall",                            
+                    GameScene.Instance.InstantiateSceneObject("SoccerBall",                            
                         position: this.transform.position + this.cameraAttachmentPoint.transform.forward);
                 }
                 else
                 {
-                    var gameObject = Scene.Instance.InstantiateLocalObject("SoccerBall",
+                    var gameObject = GameScene.Instance.InstantiateLocalObject("SoccerBall",
                             actorNumber: this.actorNumber,
                             position: this.transform.position + this.cameraAttachmentPoint.transform.forward);
 
@@ -226,9 +231,9 @@ namespace VSB
 
         private void SpawnTree()
         {
-            if (Scene.Instance)
+            if (GameScene.Instance)
             {
-                Scene.Instance.InstantiateStatic("Tree", position: this.transform.position + this.cameraAttachmentPoint.transform.forward);
+                GameScene.Instance.InstantiateStatic("Tree", position: this.transform.position + this.cameraAttachmentPoint.transform.forward);
             }
         }
     }

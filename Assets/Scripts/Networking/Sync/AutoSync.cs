@@ -130,7 +130,7 @@ namespace Networking
 
                 if (this.photonView)
                 {
-                    this.photonView.RPC(nameof(this.RpcSendPartialState), RpcTarget.Others, (object)dataArray);
+                    this.photonView.RPC(nameof(this.RpcPartialStateSync), RpcTarget.Others,  (object)dataArray);
                 }
 
                 this.SyncCompleted(this, keys);
@@ -222,7 +222,7 @@ namespace Networking
         }
 
         [PunRPC]
-        protected virtual void RpcSendPartialState(object[] dataArray)
+        protected virtual void RpcPartialStateSync(object[] dataArray)
         {
             var dataQueue = new Queue<object>(dataArray);
 

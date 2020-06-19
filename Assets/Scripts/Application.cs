@@ -24,8 +24,6 @@ namespace VSB
                 UnityEngine.Object.DontDestroyOnLoad(gameObjcet);
                 Instance = gameObjcet.AddComponent<VSBApplication>();                
             }
-
-            NetworkManager.StartMultiplayer();
         }
     }
 }

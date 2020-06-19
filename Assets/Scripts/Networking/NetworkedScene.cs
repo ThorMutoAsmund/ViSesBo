@@ -67,6 +67,12 @@ namespace Networking
         {
             NetworkManager.Instance.WhenJoinedRoom(this, () =>
             {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    // Start receiving messages
+                    PhotonNetwork.SetInterestGroups(1, true);
+                }
+
                 foreach (var player in PhotonNetwork.CurrentRoom.Players.Values)
                 {
                     if (!player.IsLocal)

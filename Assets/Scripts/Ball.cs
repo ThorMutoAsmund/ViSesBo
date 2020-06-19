@@ -60,9 +60,9 @@ namespace VSB
         }
 
         [PunRPC]
-        public override void RpcSyncState(bool isWriting, Queue<object> dataQueue)
+        public override void RpcFullStateSync(bool isWriting, Queue<object> dataQueue)
         {
-            base.RpcSyncState(isWriting, dataQueue);
+            base.RpcFullStateSync(isWriting, dataQueue);
         }
     }
 }

@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ConcreteScene.unity
     guid: 0c3e283a0ac8cad4e94bf9aae5fba2d0
+  - enabled: 1
+    path: Assets/Scenes/LobbyScene.unity
+    guid: cd10cb7d3809d3049b8182fa295705fb
   m_configObjects: {}

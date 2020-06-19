@@ -20,7 +20,7 @@ namespace Networking
         private Dictionary<Object, System.Action> connectionHandlers = new Dictionary<Object, System.Action>();
         private Dictionary<Object, System.Action> joinedRoomHandlers = new Dictionary<Object, System.Action>();
 
-        public static void StartMultiplayer(int sendRate = 40, int serializationRate = 40, float minimalTimeScaleToDispatchInFixedUpdate = -1f)
+        public static void Connect(int sendRate = 40, int serializationRate = 40, float minimalTimeScaleToDispatchInFixedUpdate = -1f)
         {
             if (Instance == null)
             {
@@ -119,23 +119,6 @@ namespace Networking
         }
 
         [PunRPC]
-        private void RpcSpawnObjects(string[] resources, Vector3[] positions, Quaternion[] rotations, int[] viewIds)
-        {
-            if (NetworkedScene.NetworkSceneInstance)
-            {
-                Debug.Log($"== Spawning {resources.Length} objects");
-                for (int i = 0; i < resources.Length; ++i)
-                {
-                    var gameObject = NetworkedScene.NetworkSceneInstance.RpcInstantiate(resources[i], positions[i], rotations[i],  ViewIdAllocationMethod.Specific, viewIds[i]);
-                }
-            }
-            else
-            {
-                Debug.LogWarning("No scene. Cannot spawn objects.");
-            }
-        }
-
-        [PunRPC]
         private void RpcTurnOn()
         {
             Debug.Log($"== Turning on");
@@ -192,14 +175,35 @@ namespace Networking
                     }
 
                     var dataQueue = new Queue<object>();
-                    networkedObject.RpcSyncState(true, dataQueue);
-                    photonView.RPC(nameof(INetworkedObject.RpcSyncState), player, false, dataQueue);
+                    networkedObject.RpcFullStateSync(true, dataQueue);
+                    photonView.RPC(nameof(INetworkedObject.RpcFullStateSync), player, false, dataQueue);
                 }
 
                 // Tell player to enable network communication
                 this.photonView.RPC(nameof(RpcTurnOn), player);
             }
         }
+
+        [PunRPC]
+        private void RpcSpawnObjects(string[] resources, Vector3[] positions, Quaternion[] rotations, int[] viewIds)
+        {
+            if (NetworkedScene.NetworkSceneInstance)
+            {
+                Debug.Log($"== Spawning {resources.Length} objects");
+                for (int i = 0; i < resources.Length; ++i)
+                {
+                    var gameObject = NetworkedScene.NetworkSceneInstance.RpcInstantiate(resources[i], positions[i], rotations[i], viewIds[i] == 0 ? ViewIdAllocationMethod.Static : ViewIdAllocationMethod.Specific, viewIds[i]);
+                }
+
+                // Start receiving messages
+                PhotonNetwork.SetInterestGroups(1, true);
+            }
+            else
+            {
+                Debug.LogWarning("No scene. Cannot spawn objects.");
+            }
+        }
+
 
         public void ReportSceneLoaded()
         {

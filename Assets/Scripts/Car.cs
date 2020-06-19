@@ -32,7 +32,7 @@ namespace VSB
 
         private void Start()
         {
-            Scene.Instance?.CorrectHeight(this.transform);
+            GameScene.Instance?.CorrectHeight(this.transform);
             this.center = this.transform.position.Add(x: - this.radius);
         }
 
@@ -45,7 +45,7 @@ namespace VSB
                 this.transform.position = center.Add(x: Mathf.Cos(t) * this.radius, z: Mathf.Sin(t) * this.radius);
                 var e = this.transform.rotation.eulerAngles;
                 this.transform.rotation = Quaternion.Euler(e.With(y: -t / (2 * Mathf.PI) * 360f));
-                Scene.Instance?.CorrectHeight(this.transform);
+                GameScene.Instance?.CorrectHeight(this.transform);
 
                 if (!this.textSet)
                 {
@@ -56,9 +56,9 @@ namespace VSB
         }
 
         [PunRPC]
-        public override void RpcSyncState(bool isWriting, Queue<object> dataQueue)
+        public override void RpcFullStateSync(bool isWriting, Queue<object> dataQueue)
         {
-            base.RpcSyncState(isWriting, dataQueue);
+            base.RpcFullStateSync(isWriting, dataQueue);
             //if (isWriting)
             //{
             //    Debug.Log("+++ Writing to queue");

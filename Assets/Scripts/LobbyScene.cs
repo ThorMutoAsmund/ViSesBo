@@ -16,21 +16,26 @@ namespace VSB
         [SerializeField] private Text menuText;
 #pragma warning restore 0649
 
-        public RoomInfo[] RoomList { get; private set; } = new RoomInfo[0];
+        public RoomInfo[] RoomList => this.CachedRoomList.Values.ToArray();
         private Dictionary<string, RoomInfo> CachedRoomList { get; } = new Dictionary<string, RoomInfo>();
 
         private void Awake()
         {
             VSBApplication.Start();
-        }
 
+            if (!PhotonNetwork.InLobby)
+            {
+                NetworkManager.Connect();
+
+                NetworkManager.Instance.WhenConnectedToMaster(this, () =>
+                {
+                    PhotonNetwork.JoinLobby();
+                });
+            }
+        }
 
         private void Start()
         {
-            NetworkManager.Instance.WhenConnectedToMaster(this, () =>
-            {
-                PhotonNetwork.JoinLobby();
-            });
         }
 
         private void Update()
@@ -52,6 +57,13 @@ namespace VSB
                 else if (Input.GetKeyDown(KeyCode.Alpha3) && this.RoomList.Length > 2)
                 {
                     JoinRoom(this.RoomList[2].Name);
+                }
+            }
+            else if (PhotonNetwork.InRoom)
+            { 
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    ReloadLobby();
                 }
             }
         }
@@ -82,10 +94,43 @@ namespace VSB
                     this.CachedRoomList.Add(info.Name, info);
                 }
             }
-
-            this.RoomList = this.CachedRoomList.Values.ToArray();
         }
 
+        public override void OnJoinRoomFailed(short returnCode, string message)
+        {
+            Debug.Log($"== Join room failed! {message}");
+            ReloadLobby();
+        }
+
+        private void ReloadLobby()
+        {
+            this.CachedRoomList.Clear();
+
+            if (PhotonNetwork.InRoom)
+            {
+                PhotonNetwork.LeaveRoom();
+                
+                NetworkManager.Instance.WhenConnectedToMaster(this, () =>
+                {
+                    PhotonNetwork.JoinLobby();
+                    ScreenFade.FadeIn();
+                });
+            }
+            else
+            {
+                PhotonNetwork.JoinLobby();
+                ScreenFade.FadeIn();
+            }
+        }
+
+        public override void OnJoinedRoom()
+        {
+            if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
+            {
+                Debug.Log("== Empty room! Leaving.");
+                ReloadLobby();
+            }
+        }
 
         public override void OnRoomListUpdate(List<RoomInfo> roomList)
         {
@@ -127,7 +172,6 @@ namespace VSB
                 PhotonNetwork.JoinRoom(roomName);
             });
         }
-
 
         public override void OnJoinedLobby()
         {

@@ -8,6 +8,6 @@ namespace Networking
 {
     public interface INetworkedObject
     {
-        void RpcSyncState(bool isWriting, Queue<object> dataQueue);
+        void RpcFullStateSync(bool isWriting, Queue<object> dataQueue);
     }
 }

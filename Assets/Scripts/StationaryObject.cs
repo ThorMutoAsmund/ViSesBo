@@ -12,7 +12,7 @@ namespace VSB
 
         private void Start()
         {
-            Scene.Instance?.CorrectHeight(this.transform, this.correctParent);
+            GameScene.Instance?.CorrectHeight(this.transform, this.correctParent);
 
             this.gameObject.isStatic = true;
         }

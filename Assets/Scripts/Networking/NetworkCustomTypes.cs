@@ -7,7 +7,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace Networking
 {
     public static class NetworkCustomTypes
-    {        
+    {
         private static byte CustomCodeColor = 1;
         private static byte CustomCodeQueue = 2;
 
@@ -62,6 +62,11 @@ namespace Networking
             while (queue.Count > 0)
             {
                 var obj = queue.Dequeue<object>();
+                if (obj is UnityEngine.Color colorObj)
+                {
+                    obj = new SerializeableColor(colorObj);
+                }
+
                 var bytes = ObjectToByteArray(obj);
 
                 outStream.Write(BitConverter.GetBytes((UInt16)bytes.Length), 0, 2);
@@ -91,6 +96,11 @@ namespace Networking
                     inStream.Read(bytes, 0, objLength);
 
                     var obj = ByteArrayToObject(bytes);
+
+                    if (obj is SerializeableColor serializeableColorObj)
+                    {
+                        obj = serializeableColorObj.ToUnityColor();
+                    }
 
                     queue.Enqueue(obj);
                 }
@@ -124,5 +134,28 @@ namespace Networking
 
             return obj;
         }
+    }
+
+    [Serializable]
+    public struct SerializeableColor
+    {
+        public float r { get; set; }
+        public float g { get; set; }
+        public float b { get; set; }
+        public float a { get; set; }
+
+        public SerializeableColor(UnityEngine.Color color)
+        {
+            this.r = color.r;
+            this.g = color.g;
+            this.b = color.b;
+            this.a = color.a;
+        }
+
+        public UnityEngine.Color ToUnityColor()
+        {
+            return new UnityEngine.Color(this.r, this.g, this.b, this.a);
+        }
+
     }
 }

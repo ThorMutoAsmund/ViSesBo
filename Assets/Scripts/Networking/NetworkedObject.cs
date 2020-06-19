@@ -23,6 +23,8 @@ namespace Networking
             this.AutoSync = this.gameObject.AddComponent<AutoSync>();
             this.AutoSync.ObjectToSync = this;
             this.AutoSync.SyncCompleted += (sender, keys) => AfterSync(keys);
+
+            this.photonView.Group = 1;
         }
 
         [PunRPC]
@@ -39,7 +41,7 @@ namespace Networking
 
 
         [PunRPC]
-        public virtual void RpcSyncState(bool isWriting, Queue<object> dataQueue)
+        public virtual void RpcFullStateSync(bool isWriting, Queue<object> dataQueue)
         {
             this.AutoSync.FullStateSync(isWriting, dataQueue);
         }

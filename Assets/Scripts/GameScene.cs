@@ -6,9 +6,9 @@ using UnityEngine.SceneManagement;
 
 namespace VSB
 {
-    public class Scene : NetworkedScene
+    public class GameScene : NetworkedScene
     {
-        public static Scene Instance => NetworkedScene.NetworkSceneInstance as Scene;
+        public static GameScene Instance => NetworkedScene.NetworkSceneInstance as GameScene;
         public Terrain Terrain { get; private set; }
 
         private RigidPlayer localPlayer;
@@ -18,25 +18,30 @@ namespace VSB
 
             VSBApplication.Start();
 
+            if (!PhotonNetwork.IsConnected)
+            {
+                NetworkManager.Connect();
+
+                NetworkManager.Instance.WhenConnectedToMaster(this, () =>
+                {
+                    var roomName = System.Guid.NewGuid().ToString().Substring(0, 8);
+                    PhotonNetwork.CreateRoom(roomName, roomOptions: new RoomOptions()
+                    {
+                        MaxPlayers = 0,
+                        PlayerTtl = 0,
+                        EmptyRoomTtl = 0,
+                        PublishUserId = true,
+                        CleanupCacheOnLeave = true
+                    });
+                });
+            }
+
             this.Terrain = this.GetComponentInChildren<Terrain>();
         }
 
         protected override void Start()
         {
             base.Start();
-
-            NetworkManager.Instance.WhenConnectedToMaster(this, () =>
-            {
-                var roomName = System.Guid.NewGuid().ToString().Substring(0, 8);
-                PhotonNetwork.CreateRoom(roomName, roomOptions: new RoomOptions()
-                {
-                    MaxPlayers = 0,
-                    PlayerTtl = 0,
-                    EmptyRoomTtl = 3000,
-                    PublishUserId = true,
-                    CleanupCacheOnLeave = true
-                });
-            });
 
             // Fade in
             ScreenFade.FadeIn();
@@ -59,8 +64,11 @@ namespace VSB
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                PhotonNetwork.LeaveRoom();
-                PhotonNetwork.JoinLobby();
+                Networking.ScreenFade.FadeOut(whenDone: () =>
+                {
+                    PhotonNetwork.LeaveRoom();
+                    SceneManager.LoadSceneAsync("LobbyScene");
+                });
             }
         }
 
