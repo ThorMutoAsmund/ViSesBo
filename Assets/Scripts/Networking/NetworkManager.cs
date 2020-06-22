@@ -28,6 +28,7 @@ namespace Networking
         private static Dictionary<int, INetworkedObject> networkedObjectList = new Dictionary<int, INetworkedObject>();
         private Dictionary<Object, System.Action> connectionHandlers = new Dictionary<Object, System.Action>();
         private Dictionary<Object, System.Action> joinedRoomHandlers = new Dictionary<Object, System.Action>();
+        private Dictionary<Object, System.Action> disconnectedHandlers = new Dictionary<Object, System.Action>();
 
         public static void Connect(int sendRate = 40, int serializationRate = 40, float minimalTimeScaleToDispatchInFixedUpdate = -1f)
         {
@@ -36,7 +37,10 @@ namespace Networking
                 var gameObjcet = new GameObject(typeof(NetworkManager).Name);
                 Object.DontDestroyOnLoad(gameObjcet);
                 Instance = gameObjcet.AddComponent<NetworkManager>();
+            }
 
+            if (PhotonNetwork.NetworkClientState == ClientState.Disconnected || PhotonNetwork.NetworkClientState == ClientState.PeerCreated)
+            {
                 PhotonNetwork.ConnectUsingSettings();
                 PhotonNetwork.SendRate = sendRate;
                 PhotonNetwork.SerializationRate = serializationRate;
@@ -89,6 +93,15 @@ namespace Networking
         public override void OnDisconnected(DisconnectCause cause)
         {
             Debug.Log("== Disconnected");
+
+            foreach (var caller in this.disconnectedHandlers.Keys)
+            {
+                if (caller)
+                {
+                    this.disconnectedHandlers[caller]?.Invoke();
+                }
+            }
+            this.disconnectedHandlers.Clear();
         }
 
         public void WhenConnectedToMaster(Object caller, System.Action callBack)
@@ -125,6 +138,24 @@ namespace Networking
             }
 
             this.joinedRoomHandlers[caller] = callBack;
+        }
+
+        public void WhenDisconnected(Object caller, System.Action callBack)
+        {
+            this.disconnectedHandlers.Remove(caller);
+
+            if (callBack == null)
+            {
+                return;
+            }
+
+            if (PhotonNetwork.NetworkClientState == ClientState.Disconnected)
+            {
+                callBack.Invoke();
+                return;
+            }
+
+            this.disconnectedHandlers[caller] = callBack;
         }
 
         [PunRPC]

@@ -16,8 +16,10 @@ namespace VSB
         [SerializeField] private Text menuText;
 #pragma warning restore 0649
 
-        public RoomInfo[] RoomList => this.CachedRoomList.Values.ToArray();
+        private RoomInfo[] RoomList => this.CachedRoomList.Values.ToArray();
         private Dictionary<string, RoomInfo> CachedRoomList { get; } = new Dictionary<string, RoomInfo>();
+        private Coroutine ensureConnectedCoroutine;
+        private bool reconnectWhenDisconnected;
 
         private void Awake()
         {
@@ -29,13 +31,94 @@ namespace VSB
             {
                 NetworkManager.Instance.WhenConnectedToMaster(this, () =>
                 {
+                    this.reconnectWhenDisconnected = true;
                     PhotonNetwork.JoinLobby();
                 });
             }
+
+            //NetworkManager.Instance.WhenDisconnected(this, () =>
+            //{
+            //    if (this.reconnectWhenDisconnected)
+            //    {
+            //        Debug.Log($"== Disconnected. Trying to reconnect...");
+            //        PhotonNetwork.Reconnect();
+            //    }
+            //    else
+            //    {
+            //        Debug.Log($"== Disconnected. Trying to connect...");
+            //        NetworkManager.Connect();
+            //    }
+            //});
         }
 
         private void Start()
         {
+        }
+
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            this.ensureConnectedCoroutine = StartCoroutine(EnsureConnected());
+        }
+
+        public override void OnDisable()
+        {
+            base.OnDisable();
+
+            if (this.ensureConnectedCoroutine != null)
+            {
+                StopCoroutine(this.ensureConnectedCoroutine);
+                this.ensureConnectedCoroutine = null;
+            }
+        }
+
+        public override void OnJoinRoomFailed(short returnCode, string message)
+        {
+            Debug.Log($"== Join room failed! {message}");
+
+            ReloadLobby();
+        }
+
+        public override void OnJoinedRoom()
+        {
+            if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
+            {
+                Debug.Log("== Empty room! Leaving.");
+
+                ReloadLobby();
+            }
+        }
+
+        public override void OnRoomListUpdate(List<RoomInfo> roomList)
+        {
+            // Update internal cached room list
+            UpdateCachedRoomList(roomList);
+            CreateGui();
+
+            Debug.Log("== Room list updated");
+        }
+
+        private void CreateGui()
+        { 
+            if (this.RoomList.Length == 0)
+            {
+                this.menuText.text = "No rooms";
+            }
+            else
+            {
+                int i = 0;
+
+                this.menuText.text = $"Press a key to join a room\n{i++}: random\n";
+                foreach (var roomInfo in this.RoomList)
+                {
+                    this.menuText.text += $"{i++}: {roomInfo.Name}\n";
+                }
+            }
+        }
+
+        public override void OnJoinedLobby()
+        {
+            Debug.Log("== Joined lobby");
         }
 
         private void Update()
@@ -96,15 +179,10 @@ namespace VSB
             }
         }
 
-        public override void OnJoinRoomFailed(short returnCode, string message)
-        {
-            Debug.Log($"== Join room failed! {message}");
-            ReloadLobby();
-        }
-
         private void ReloadLobby()
         {
             this.CachedRoomList.Clear();
+            CreateGui();
 
             if (PhotonNetwork.InRoom)
             {
@@ -121,38 +199,6 @@ namespace VSB
                 PhotonNetwork.JoinLobby();
                 ScreenFade.FadeIn();
             }
-        }
-
-        public override void OnJoinedRoom()
-        {
-            if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
-            {
-                Debug.Log("== Empty room! Leaving.");
-                ReloadLobby();
-            }
-        }
-
-        public override void OnRoomListUpdate(List<RoomInfo> roomList)
-        {
-            // Update internal cached room list
-            UpdateCachedRoomList(roomList);
-
-            if (this.RoomList.Length == 0)
-            {
-                this.menuText.text = "No rooms";
-            }
-            else
-            {
-                int i = 0;
-
-                this.menuText.text = $"Press a key to join a room\n{i++}: random\n";
-                foreach (var roomInfo in this.RoomList)
-                {
-                    this.menuText.text += $"{i++}: {roomInfo.Name}\n";
-                }
-            }
-
-            Debug.Log("== Room list updated");
         }
 
         private void JoinRandomRoom()
@@ -173,9 +219,39 @@ namespace VSB
             });
         }
 
-        public override void OnJoinedLobby()
+        /// <summary>
+        /// Runs when the lobby controller is enabled and ensures that the instructor stays connected to photon
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator EnsureConnected()
         {
-            Debug.Log("== Joined lobby");
+            for (; ; )
+            {
+                if (PhotonNetwork.NetworkClientState == ClientState.Disconnected)
+                {
+                    this.CachedRoomList.Clear();
+                    CreateGui();
+
+                    NetworkManager.Instance.WhenConnectedToMaster(this, () =>
+                    {
+                        this.reconnectWhenDisconnected = true;
+                        PhotonNetwork.JoinLobby();
+                    });
+
+                    if (this.reconnectWhenDisconnected)
+                    {
+                        Debug.Log($"== Disconnected. Trying to reconnect...");
+                        PhotonNetwork.Reconnect();
+                    }
+                    else
+                    {
+                        Debug.Log($"== Disconnected. Trying to connect...");
+                        NetworkManager.Connect();
+                    }
+                }
+
+                yield return new WaitForSeconds(1f);
+            }
         }
     }
 }
