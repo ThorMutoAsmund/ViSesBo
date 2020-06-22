@@ -28,7 +28,6 @@ namespace Networking
         private static Dictionary<int, INetworkedObject> networkedObjectList = new Dictionary<int, INetworkedObject>();
         private Dictionary<Object, System.Action> connectionHandlers = new Dictionary<Object, System.Action>();
         private Dictionary<Object, System.Action> joinedRoomHandlers = new Dictionary<Object, System.Action>();
-        private Dictionary<Object, System.Action> disconnectedHandlers = new Dictionary<Object, System.Action>();
 
         public static void Connect(int sendRate = 40, int serializationRate = 40, float minimalTimeScaleToDispatchInFixedUpdate = -1f)
         {
@@ -93,15 +92,6 @@ namespace Networking
         public override void OnDisconnected(DisconnectCause cause)
         {
             Debug.Log("== Disconnected");
-
-            foreach (var caller in this.disconnectedHandlers.Keys)
-            {
-                if (caller)
-                {
-                    this.disconnectedHandlers[caller]?.Invoke();
-                }
-            }
-            this.disconnectedHandlers.Clear();
         }
 
         public void WhenConnectedToMaster(Object caller, System.Action callBack)
@@ -140,23 +130,6 @@ namespace Networking
             this.joinedRoomHandlers[caller] = callBack;
         }
 
-        public void WhenDisconnected(Object caller, System.Action callBack)
-        {
-            this.disconnectedHandlers.Remove(caller);
-
-            if (callBack == null)
-            {
-                return;
-            }
-
-            if (PhotonNetwork.NetworkClientState == ClientState.Disconnected)
-            {
-                callBack.Invoke();
-                return;
-            }
-
-            this.disconnectedHandlers[caller] = callBack;
-        }
 
         [PunRPC]
         private void RpcTurnOn()
@@ -167,7 +140,13 @@ namespace Networking
         [PunRPC]
         private void RpcForceLoadScene(string sceneName)
         {
-            SceneManager.LoadSceneAsync(sceneName);
+            // Stop receiving messages
+            PhotonNetwork.SetInterestGroups(1, false);
+
+            Networking.ScreenFade.FadeOut(whenDone: () =>
+            {
+                SceneManager.LoadSceneAsync(sceneName);
+            });
         }
 
         public void ForceLoadScene(Player newPlayer, string sceneName)
@@ -183,6 +162,10 @@ namespace Networking
                 PhotonNetwork.SendAllOutgoingCommands();
                 PhotonNetwork.IsMessageQueueRunning = false;
                 SceneManager.LoadSceneAsync(sceneName);
+            }
+            else
+            {
+                Debug.LogError("== Error loading scene. Not master client.");
             }
         }
         
@@ -239,11 +222,18 @@ namespace Networking
                 Debug.Log($"== Spawning {resources.Length} objects");
                 for (int i=0; i < resources.Length; ++i)
                 {
+                    // Skip this if it already exists. It might exist if it was created while the scene was loading
+                    if (viewIds[i] != 0 && PhotonNetwork.GetPhotonView(viewIds[i]))
+                    {
+                        continue;
+                    }
+
                     var gameObject = NetworkedScene.NetworkSceneInstance.RpcInstantiate(
                         resources[i], 
                         positions[i], 
                         rotations[i], 
                         viewIds[i] == 0 ? ViewIdAllocationMethod.Static : ViewIdAllocationMethod.Specific, viewIds[i]);
+                    Debug.Log($"ViewID: {viewIds[i]}");
                 }
 
                 // Start receiving messages
@@ -278,6 +268,12 @@ namespace Networking
             }
             this.joinedRoomHandlers.Clear();
         }
+
+        public override void OnJoinRoomFailed(short returnCode, string message)
+        {
+            Debug.Log($"== Join room failed {message}");
+        }
+
         public override void OnLeftRoom()
         {
             Debug.Log("== Left room");

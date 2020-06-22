@@ -1,6 +1,7 @@
 ﻿using Networking;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,28 +13,26 @@ namespace VSB
         public Terrain Terrain { get; private set; }
 
         private RigidPlayer localPlayer;
+        private Coroutine ensureConnectedCoroutine;
+        private bool reconnectWhenDisconnected;
+        private string roomName;
+
         protected override void Awake()
         {
             base.Awake();
 
-            VSBApplication.Start();
+            VSBApplication.Start(VSBApplicationType.Trainee);
 
             NetworkManager.Connect();
 
             if (!PhotonNetwork.InRoom)
             {
-                NetworkManager.Instance.WhenConnectedToMaster(this, () =>
-                {
-                    var roomName = System.Guid.NewGuid().ToString().Substring(0, 8);
-                    PhotonNetwork.CreateRoom(roomName, roomOptions: new RoomOptions()
-                    {
-                        MaxPlayers = 0,
-                        PlayerTtl = 0,
-                        EmptyRoomTtl = 0,
-                        PublishUserId = true,
-                        CleanupCacheOnLeave = true
-                    });
-                });
+                JoinRoomWhenConnected();
+            }
+            else
+            {
+                this.reconnectWhenDisconnected = true;
+                this.roomName = PhotonNetwork.CurrentRoom.Name;
             }
 
             this.Terrain = this.GetComponentInChildren<Terrain>();
@@ -45,6 +44,23 @@ namespace VSB
 
             // Fade in
             ScreenFade.FadeIn();
+        }
+
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            this.ensureConnectedCoroutine = StartCoroutine(EnsureConnected());
+        }
+
+        public override void OnDisable()
+        {
+            base.OnDisable();
+
+            if (this.ensureConnectedCoroutine != null)
+            {
+                StopCoroutine(this.ensureConnectedCoroutine);
+                this.ensureConnectedCoroutine = null;
+            }
         }
 
         private void Update()
@@ -66,8 +82,16 @@ namespace VSB
             {
                 Networking.ScreenFade.FadeOut(whenDone: () =>
                 {
-                    PhotonNetwork.LeaveRoom();
-                    SceneManager.LoadSceneAsync("LobbyScene");
+                    if (VSBApplication.Instance.ApplicationType == VSBApplicationType.Instructor)
+                    {            
+                        PhotonNetwork.LeaveRoom();
+                        SceneManager.LoadSceneAsync("LobbyScene");
+                    }
+                    else
+                    {
+                        NetworkManager.Instance.LoadScene("StartGameScene");
+                        //SceneManager.LoadSceneAsync("StartGameScene");
+                    }
                 });
             }
         }
@@ -114,6 +138,39 @@ namespace VSB
             }
         }
 
+        private void JoinRoomWhenConnected()
+        {
+            NetworkManager.Instance.WhenConnectedToMaster(this, () =>
+            {
+                if (this.reconnectWhenDisconnected)
+                {
+                    PhotonNetwork.RejoinRoom(this.roomName);
+                }
+                else
+                {
+                    this.reconnectWhenDisconnected = true;
+
+                    this.roomName = System.Guid.NewGuid().ToString().Substring(0, 8);
+                    PhotonNetwork.CreateRoom(this.roomName, roomOptions: new RoomOptions()
+                    {
+                        MaxPlayers = 0,
+                        PlayerTtl = 3000,
+                        EmptyRoomTtl = 3000,
+                        PublishUserId = true,
+                        CleanupCacheOnLeave = true
+                    });
+                }
+            });
+        }
+
+        public override void OnJoinRoomFailed(short returnCode, string message)
+        {
+            Networking.ScreenFade.FadeOut(whenDone: () =>
+            {
+                SceneManager.LoadSceneAsync(VSBApplication.Instance.ApplicationType == VSBApplicationType.Instructor ? "LobbyScene" : "StartGameScene");
+            });
+        }
+
         private void JoinRandomRoom()
         {
             Networking.ScreenFade.FadeOut(whenDone: () =>
@@ -153,5 +210,28 @@ namespace VSB
             }
         }
 
+        private IEnumerator EnsureConnected()
+        {
+            for (; ; )
+            {
+                if (PhotonNetwork.NetworkClientState == ClientState.Disconnected)
+                {
+                    JoinRoomWhenConnected();
+
+                    if (this.reconnectWhenDisconnected)
+                    {
+                        Debug.Log($"== Disconnected. Trying to reconnect...");
+                        PhotonNetwork.Reconnect();
+                    }
+                    else
+                    {
+                        Debug.Log($"== Disconnected. Trying to connect...");
+                        NetworkManager.Connect();
+                    }
+                }
+
+                yield return new WaitForSeconds(1f);
+            }
+        }
     }
 }

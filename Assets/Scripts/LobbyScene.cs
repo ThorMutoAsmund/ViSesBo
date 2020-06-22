@@ -23,32 +23,14 @@ namespace VSB
 
         private void Awake()
         {
-            VSBApplication.Start();
+            VSBApplication.Start(VSBApplicationType.Instructor);
 
             NetworkManager.Connect();
 
             if (!PhotonNetwork.InLobby)
             {
-                NetworkManager.Instance.WhenConnectedToMaster(this, () =>
-                {
-                    this.reconnectWhenDisconnected = true;
-                    PhotonNetwork.JoinLobby();
-                });
+                JoinLobbyWhenConnected();
             }
-
-            //NetworkManager.Instance.WhenDisconnected(this, () =>
-            //{
-            //    if (this.reconnectWhenDisconnected)
-            //    {
-            //        Debug.Log($"== Disconnected. Trying to reconnect...");
-            //        PhotonNetwork.Reconnect();
-            //    }
-            //    else
-            //    {
-            //        Debug.Log($"== Disconnected. Trying to connect...");
-            //        NetworkManager.Connect();
-            //    }
-            //});
         }
 
         private void Start()
@@ -219,10 +201,15 @@ namespace VSB
             });
         }
 
-        /// <summary>
-        /// Runs when the lobby controller is enabled and ensures that the instructor stays connected to photon
-        /// </summary>
-        /// <returns></returns>
+        private void JoinLobbyWhenConnected()
+        {
+            NetworkManager.Instance.WhenConnectedToMaster(this, () =>
+            {
+                this.reconnectWhenDisconnected = true;
+                PhotonNetwork.JoinLobby();
+            });
+        }
+
         private IEnumerator EnsureConnected()
         {
             for (; ; )
@@ -232,11 +219,7 @@ namespace VSB
                     this.CachedRoomList.Clear();
                     CreateGui();
 
-                    NetworkManager.Instance.WhenConnectedToMaster(this, () =>
-                    {
-                        this.reconnectWhenDisconnected = true;
-                        PhotonNetwork.JoinLobby();
-                    });
+                    JoinLobbyWhenConnected();
 
                     if (this.reconnectWhenDisconnected)
                     {
