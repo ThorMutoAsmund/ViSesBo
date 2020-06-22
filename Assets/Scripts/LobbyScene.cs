@@ -23,10 +23,10 @@ namespace VSB
         {
             VSBApplication.Start();
 
+            NetworkManager.Connect();
+
             if (!PhotonNetwork.InLobby)
             {
-                NetworkManager.Connect();
-
                 NetworkManager.Instance.WhenConnectedToMaster(this, () =>
                 {
                     PhotonNetwork.JoinLobby();

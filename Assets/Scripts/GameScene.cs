@@ -18,10 +18,10 @@ namespace VSB
 
             VSBApplication.Start();
 
-            if (!PhotonNetwork.IsConnected)
-            {
-                NetworkManager.Connect();
+            NetworkManager.Connect();
 
+            if (!PhotonNetwork.InRoom)
+            {
                 NetworkManager.Instance.WhenConnectedToMaster(this, () =>
                 {
                     var roomName = System.Guid.NewGuid().ToString().Substring(0, 8);
