@@ -192,13 +192,9 @@ namespace Networking
             return gameObject;
         }
 
-        public (string[] resources, Vector3[] positions, Quaternion[] rotations, int[] viewIds) GetSpawnedObjects()
+        public IEnumerable<SpawnedObject> GetSpawnedObjects()
         {
-            var spawnedObjects = FindObjectsOfType<MonoBehaviour>().OfType<SpawnedObject>();
-            return (spawnedObjects.Select(obj => obj.ResourceName).ToArray(),
-                    spawnedObjects.Select(obj => (obj as MonoBehaviour).transform.position).ToArray(),
-                    spawnedObjects.Select(obj => (obj as MonoBehaviour).transform.rotation).ToArray(),
-                    spawnedObjects.Select(obj => (obj as MonoBehaviour).GetComponent<PhotonView>()?.ViewID ?? 0).ToArray());
+            return FindObjectsOfType<MonoBehaviour>().OfType<SpawnedObject>();
         }
 
         private void CreateTransformHashes()

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using static Networking.NetworkManager;
 
 namespace Networking
 {
@@ -62,10 +63,6 @@ namespace Networking
             while (queue.Count > 0)
             {
                 var obj = queue.Dequeue<object>();
-                if (obj is UnityEngine.Color colorObj)
-                {
-                    obj = new SerializeableColor(colorObj);
-                }
 
                 var bytes = ObjectToByteArray(obj);
 
@@ -97,11 +94,6 @@ namespace Networking
 
                     var obj = ByteArrayToObject(bytes);
 
-                    if (obj is SerializeableColor serializeableColorObj)
-                    {
-                        obj = serializeableColorObj.ToUnityColor();
-                    }
-
                     queue.Enqueue(obj);
                 }
             }
@@ -114,6 +106,19 @@ namespace Networking
             if (obj == null)
             {
                 return null;
+            }
+
+            if (obj is UnityEngine.Color colorObj)
+            {
+                obj = new SerializeableColor(colorObj);
+            }
+            else if (obj is UnityEngine.Vector3 vector3Obj)
+            {
+                obj = new SerializeableVector3(vector3Obj);
+            }
+            else if (obj is UnityEngine.Quaternion quaternionObj)
+            {
+                obj = new SerializeableQuaternion(quaternionObj);
             }
 
             BinaryFormatter bf = new BinaryFormatter();
@@ -132,7 +137,64 @@ namespace Networking
             memStream.Seek(0, SeekOrigin.Begin);
             object obj = (object)binForm.Deserialize(memStream);
 
+            if (obj is SerializeableColor serializeableColorObj)
+            {
+                obj = serializeableColorObj.ToUnityColor();
+            }
+            else if (obj is SerializeableVector3 serializeableVector3Obj)
+            {
+                obj = serializeableVector3Obj.ToUnityVector3();
+            }
+            else if (obj is SerializeableQuaternion serializeableQuaternionObj)
+            {
+                obj = serializeableQuaternionObj.ToUnityQuaternion();
+            }
+
+
+
             return obj;
+        }
+    }
+
+    [Serializable]
+    public struct SerializeableVector3
+    {
+        public float x { get; set; }
+        public float y { get; set; }
+        public float z { get; set; }
+
+        public SerializeableVector3(UnityEngine.Vector3 vector3)
+        {
+            this.x = vector3.x;
+            this.y = vector3.y;
+            this.z = vector3.z;
+        }
+
+        public UnityEngine.Vector3 ToUnityVector3()
+        {
+            return new UnityEngine.Vector3(this.x, this.y, this.z);
+        }
+    }
+
+    [Serializable]
+    public struct SerializeableQuaternion
+    {
+        public float x { get; set; }
+        public float y { get; set; }
+        public float z { get; set; }
+        public float w { get; set; }
+
+        public SerializeableQuaternion(UnityEngine.Quaternion quaternion)
+        {
+            this.x = quaternion.x;
+            this.y = quaternion.y;
+            this.z = quaternion.z;
+            this.w = quaternion.w;
+        }
+
+        public UnityEngine.Quaternion ToUnityQuaternion()
+        {
+            return new UnityEngine.Quaternion(this.x, this.y, this.z, this.w);
         }
     }
 
@@ -156,6 +218,6 @@ namespace Networking
         {
             return new UnityEngine.Color(this.r, this.g, this.b, this.a);
         }
-
     }
 }
+

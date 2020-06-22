@@ -11,6 +11,15 @@ namespace Networking
 {
     public class NetworkManager : MonoBehaviourPunCallbacks
     {
+        [System.Serializable]
+        public class SpawnedObjectDetails
+        {
+            public string Resource { get; set; }
+            public Vector3 Position { get; set; }
+            public Quaternion Rotation { get; set; }
+            public int ViewId { get; set; }
+        }
+
         public static NetworkManager Instance { get; private set; }
 
         public static readonly int NetworkManagerViewId = 999;
@@ -154,9 +163,16 @@ namespace Networking
             if (player != null && NetworkedScene.NetworkSceneInstance)
             {
                 // Instantiate all spawned objects
-                var (resources, positions, rotations, viewIds) = NetworkedScene.NetworkSceneInstance.GetSpawnedObjects();
-                Debug.Log($"== Requesting actor {actorNumber} to spawn {resources.Count()} networked objects");
-                this.photonView.RPC(nameof(RpcSpawnObjects), player, resources, positions, rotations, viewIds);
+                var spawnedObjects = NetworkedScene.NetworkSceneInstance.GetSpawnedObjects();
+
+                Debug.Log($"== Requesting actor {actorNumber} to spawn {spawnedObjects.Count()} networked objects");
+                this.photonView.RPC(nameof(RpcSpawnObjects), player,
+                    spawnedObjects.Select(obj => obj.ResourceName).ToArray(),
+                    spawnedObjects.Select(obj => (obj as MonoBehaviour).transform.position).ToArray(),
+                    spawnedObjects.Select(obj => (obj as MonoBehaviour).transform.rotation).ToArray(),
+                    spawnedObjects.Select(obj => (obj as MonoBehaviour).GetComponent<PhotonView>()?.ViewID ?? 0).ToArray()
+                );
+
 
                 // Sync all networked objects
                 foreach (var kvp in networkedObjectList)
@@ -185,14 +201,18 @@ namespace Networking
         }
 
         [PunRPC]
-        private void RpcSpawnObjects(string[] resources, Vector3[] positions, Quaternion[] rotations, int[] viewIds)
+        private void RpcSpawnObjects(string[] resources, Vector3[] positions, Quaternion[] rotations, int[] viewIds )
         {
             if (NetworkedScene.NetworkSceneInstance)
             {
                 Debug.Log($"== Spawning {resources.Length} objects");
-                for (int i = 0; i < resources.Length; ++i)
+                for (int i=0; i < resources.Length; ++i)
                 {
-                    var gameObject = NetworkedScene.NetworkSceneInstance.RpcInstantiate(resources[i], positions[i], rotations[i], viewIds[i] == 0 ? ViewIdAllocationMethod.Static : ViewIdAllocationMethod.Specific, viewIds[i]);
+                    var gameObject = NetworkedScene.NetworkSceneInstance.RpcInstantiate(
+                        resources[i], 
+                        positions[i], 
+                        rotations[i], 
+                        viewIds[i] == 0 ? ViewIdAllocationMethod.Static : ViewIdAllocationMethod.Specific, viewIds[i]);
                 }
 
                 // Start receiving messages
