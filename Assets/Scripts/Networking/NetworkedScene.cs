@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -59,7 +58,7 @@ namespace Networking
             }
             else if (PhotonNetwork.IsMasterClient)
             {
-                PhotonNetwork.IsMessageQueueRunning = true;
+                //PhotonNetwork.IsMessageQueueRunning = true;
             }
         }
 
@@ -95,8 +94,6 @@ namespace Networking
 
         public override void OnPlayerEnteredRoom(Player newPlayer)
         {
-            Debug.Log($"== Player {newPlayer.ActorNumber} entered room");
-
             // Create the joining player locally
             SpawnPlayer(newPlayer); // TBD hide until reports "ready"
 

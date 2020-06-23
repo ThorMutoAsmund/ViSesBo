@@ -10,37 +10,35 @@ using UnityEngine.UI;
 
 namespace VSB
 { 
-    public class StartGameScene : MonoBehaviourPunCallbacks
+    public class StartGameScene : NetworkedScene
     {
-    #pragma warning disable 0649
-        [SerializeField] private Text menuText;
+#pragma warning disable 0649
+        [SerializeField] private Text statusText;
 #pragma warning restore 0649
 
-        private RoomInfo[] RoomList => this.CachedRoomList.Values.ToArray();
-        private Dictionary<string, RoomInfo> CachedRoomList { get; } = new Dictionary<string, RoomInfo>();
         private Coroutine ensureConnectedCoroutine;
         private bool reconnectWhenDisconnected;
         private string roomName;
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             VSBApplication.Start(VSBApplicationType.Trainee);
+
+            PhotonNetwork.OfflineMode = false;
 
             NetworkManager.Connect();
 
             if (!PhotonNetwork.InRoom)
             {
-                CreateRoomWhenConnected();
+                JoinRoomWhenConnected();
             }
             else 
             {
                 this.reconnectWhenDisconnected = true;
                 this.roomName = PhotonNetwork.CurrentRoom.Name;
             }
-        }
-
-        private void Start()
-        {
         }
 
         public override void OnEnable()
@@ -62,28 +60,53 @@ namespace VSB
 
         private void Update()
         {
-            if (PhotonNetwork.IsMasterClient && Input.GetKeyDown(KeyCode.Alpha1))
+            if (VSBApplication.Instance.ApplicationType == VSBApplicationType.Trainee)
             {
-                LoadScene("GrassScene");
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                {
+                    LoadScene("GrassScene");
+                }
+                else if (Input.GetKeyDown(KeyCode.Alpha2))
+                {
+                    LoadScene("ConcreteScene");
+                }
             }
-            else if (PhotonNetwork.IsMasterClient && Input.GetKeyDown(KeyCode.Alpha2))
+        }
+
+        public override void OnJoinRoomFailed(short returnCode, string message)
+        {
+            // If we tried a reconnect, but it failed, just create a new room
+            if (this.reconnectWhenDisconnected)
             {
-                LoadScene("ConcreteScene");
+                this.reconnectWhenDisconnected = false;
+                JoinRoomWhenConnected();
             }
         }
 
         private void LoadScene(string sceneName)
         {
-            Networking.ScreenFade.FadeOut(whenDone: () =>
+            if (NetworkManager.Instance.CanLoadScene(sceneName, out string sceneLoadNotPossibleReason))
             {
-                NetworkManager.Instance.LoadScene(sceneName);
-            });
+                Networking.ScreenFade.FadeOut(whenDone: () =>
+                {
+                    NetworkManager.Instance.LoadScene(sceneName);
+                });
+            }
+            else
+            {
+                Debug.LogWarning($"== Cannot load scene. Reason: {sceneLoadNotPossibleReason}");
+            }
         }
 
-        private void CreateRoomWhenConnected()
+        private void JoinRoomWhenConnected()
         {
             NetworkManager.Instance.WhenConnectedToMaster(this, () =>
             {
+                if (this.statusText)
+                {
+                    this.statusText.text = "Network: Connected";
+                }
+
                 if (this.reconnectWhenDisconnected)
                 {
                     PhotonNetwork.RejoinRoom(this.roomName);
@@ -93,14 +116,7 @@ namespace VSB
                     this.reconnectWhenDisconnected = true;
 
                     this.roomName = System.Guid.NewGuid().ToString().Substring(0, 8);
-                    PhotonNetwork.CreateRoom(this.roomName, roomOptions: new RoomOptions()
-                    {
-                        MaxPlayers = 0,
-                        PlayerTtl = 3000,
-                        EmptyRoomTtl = 3000,
-                        PublishUserId = true,
-                        CleanupCacheOnLeave = true
-                    });
+                    VSBApplication.Instance.CreateRoom(this.roomName);
                 }
             });
         }
@@ -111,6 +127,13 @@ namespace VSB
             {
                 if (PhotonNetwork.NetworkClientState == ClientState.Disconnected)
                 {
+                    if (this.statusText)
+                    {
+                        this.statusText.text = "Network: Offline";
+                    }
+
+                    JoinRoomWhenConnected();
+
                     if (this.reconnectWhenDisconnected)
                     {
                         Debug.Log($"== Disconnected. Trying to reconnect...");
@@ -126,5 +149,7 @@ namespace VSB
                 yield return new WaitForSeconds(1f);
             }
         }
+
+        protected override void SpawnPlayer(Player newPlayer = null) { }
     }
 }
