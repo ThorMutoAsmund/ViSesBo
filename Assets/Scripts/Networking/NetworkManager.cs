@@ -77,7 +77,7 @@ namespace Networking
 
         public override void OnConnectedToMaster()
         {
-            Debug.Log("== Connected to master");
+            Debug.Log("== Connected to master.");
 
             foreach (var caller in this.connectionHandlers.Keys)
             {
@@ -91,7 +91,7 @@ namespace Networking
 
         public override void OnDisconnected(DisconnectCause cause)
         {
-            Debug.Log("== Disconnected");
+            Debug.Log("== Disconnected.");
         }
 
         public void WhenConnectedToMaster(Object caller, System.Action callBack)
@@ -134,7 +134,7 @@ namespace Networking
         [PunRPC]
         private void RpcTurnOn()
         {
-            Debug.Log($"== Turning on");
+            Debug.Log($"== Turning on.");
         }
 
         [PunRPC]
@@ -172,14 +172,14 @@ namespace Networking
         [PunRPC]
         public void RpcSceneLoaded(int actorNumber)
         {
-            Debug.Log($"== Actor {actorNumber} has loaded scene");
+            Debug.Log($"== Actor {actorNumber} has loaded scene.");
             var player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
             if (player != null && NetworkedScene.NetworkSceneInstance)
             {
                 // Instantiate all spawned objects
                 var spawnedObjects = NetworkedScene.NetworkSceneInstance.GetSpawnedObjects();
 
-                Debug.Log($"== Requesting actor {actorNumber} to spawn {spawnedObjects.Count()} networked objects");
+                Debug.Log($"== Requesting actor {actorNumber} to spawn {spawnedObjects.Count()} networked objects.");
                 this.photonView.RPC(nameof(RpcSpawnObjects), player,
                     spawnedObjects.Select(obj => obj.ResourceName).ToArray(),
                     spawnedObjects.Select(obj => (obj as MonoBehaviour).transform.position).ToArray(),
@@ -219,7 +219,7 @@ namespace Networking
         {
             if (NetworkedScene.NetworkSceneInstance)
             {
-                Debug.Log($"== Spawning {resources.Length} objects");
+                Debug.Log($"== Spawning {resources.Length} objects.");
                 for (int i=0; i < resources.Length; ++i)
                 {
                     // Skip this if it already exists. It might exist if it was created while the scene was loading
@@ -233,7 +233,6 @@ namespace Networking
                         positions[i], 
                         rotations[i], 
                         viewIds[i] == 0 ? ViewIdAllocationMethod.Static : ViewIdAllocationMethod.Specific, viewIds[i]);
-                    Debug.Log($"ViewID: {viewIds[i]}");
                 }
 
                 // Start receiving messages
@@ -241,7 +240,7 @@ namespace Networking
             }
             else
             {
-                Debug.LogWarning("No scene. Cannot spawn objects.");
+                Debug.LogWarning("== No scene. Cannot spawn objects.");
             }
         }
 
@@ -253,11 +252,11 @@ namespace Networking
 
         public override void OnCreatedRoom()
         {
-            Debug.Log($"== Created room {PhotonNetwork.CurrentRoom?.Name}");
+            Debug.Log($"== Created room {PhotonNetwork.CurrentRoom?.Name}.");
         }
         public override void OnJoinedRoom()
         {
-            Debug.Log($"== Joined room {PhotonNetwork.CurrentRoom?.Name}");
+            Debug.Log($"== Joined room {PhotonNetwork.CurrentRoom?.Name}.");
 
             foreach (var caller in this.joinedRoomHandlers.Keys)
             {
@@ -271,17 +270,17 @@ namespace Networking
 
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
-            Debug.Log($"== Join room failed {message}");
+            Debug.Log($"== Join room failed {message}.");
         }
 
         public override void OnLeftRoom()
         {
-            Debug.Log("== Left room");
+            Debug.Log("== Left room.");
         }
 
         public override void OnMasterClientSwitched(Player newMasterClient)
         {
-            Debug.Log($"== Master client switched. New master is {newMasterClient?.ActorNumber}");
+            Debug.Log($"== Master client switched. New master is {newMasterClient?.ActorNumber}.");
         }
 
         public static void Register(INetworkedObject networkedObject)
@@ -294,7 +293,7 @@ namespace Networking
 
             if (!(networkedObject is MonoBehaviour monoBehaviour))
             {
-                Debug.LogWarning("Cannot register networked object that is not a monobehaviour.");
+                Debug.LogWarning("== Cannot register networked object. Not a monobehaviour.");
                 return;
             }
 
@@ -308,7 +307,7 @@ namespace Networking
 
             networkedObjectList[photonView.ViewID] = networkedObject;
 
-            Debug.Log($"There are now {networkedObjectList.Count()} items networked");
+            Debug.Log($"There are now {networkedObjectList.Count()} items networked.");
         }
 
         internal static void NewSceneLoaded()
@@ -329,7 +328,7 @@ namespace Networking
                 networkedObjectList.Remove(key);
             }
 
-            Debug.Log($"Cleared {removeKeys.Count} items");
+            Debug.Log($"Cleared {removeKeys.Count} items.");
         }
     }
 }
