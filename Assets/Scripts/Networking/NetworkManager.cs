@@ -9,15 +9,6 @@ namespace Networking
 {
     public class NetworkManager : MonoBehaviourPunCallbacks
     {
-        [System.Serializable]
-        public class SpawnedObjectDetails
-        {
-            public string Resource { get; set; }
-            public Vector3 Position { get; set; }
-            public Quaternion Rotation { get; set; }
-            public int ViewId { get; set; }
-        }
-
         public static NetworkManager Instance { get; private set; }
 
         public static readonly int NetworkManagerViewId = 999;
@@ -185,9 +176,9 @@ namespace Networking
                 Debug.Log($"== Requesting actor {actorNumber} to spawn {spawnedObjects.Count()} networked objects.");
                 this.photonView.RPC(nameof(RpcSpawnObjects), player,
                     spawnedObjects.Select(obj => obj.ResourceName).ToArray(),
-                    spawnedObjects.Select(obj => (obj as MonoBehaviour).transform.position).ToArray(),
-                    spawnedObjects.Select(obj => (obj as MonoBehaviour).transform.rotation).ToArray(),
-                    spawnedObjects.Select(obj => (obj as MonoBehaviour).GetComponent<PhotonView>()?.ViewID ?? 0).ToArray()
+                    spawnedObjects.Select(obj => obj.Position).ToArray(),
+                    spawnedObjects.Select(obj => obj.Rotation).ToArray(),
+                    spawnedObjects.Select(obj => obj.ViewID).ToArray()
                 );
 
 
@@ -235,7 +226,8 @@ namespace Networking
                         resources[i], 
                         positions[i], 
                         rotations[i], 
-                        viewIds[i] == 0 ? ViewIdAllocationMethod.Static : ViewIdAllocationMethod.Specific, viewIds[i]);
+                        viewIds[i] == 0 ? ViewIdAllocationMethod.Static : ViewIdAllocationMethod.Specific, 
+                        viewIds[i]);
                 }
 
                 // Start receiving messages
@@ -283,12 +275,12 @@ namespace Networking
 
         public override void OnPlayerEnteredRoom(Player newPlayer)
         {
-            Debug.Log($"== Player {newPlayer.ActorNumber} entered room");
+            Debug.Log($"== Player {newPlayer.ActorNumber} entered room.");
         }
 
         public override void OnPlayerLeftRoom(Player newPlayer)
         {
-            Debug.Log($"== Player {newPlayer.ActorNumber} left room");
+            Debug.Log($"== Player {newPlayer.ActorNumber} left room.");
         }
 
         public override void OnMasterClientSwitched(Player newMasterClient)
@@ -341,7 +333,7 @@ namespace Networking
                 networkedObjectList.Remove(key);
             }
 
-            Debug.Log($"Cleared {removeKeys.Count} items.");
+            Debug.Log($"== Network manager cleared {removeKeys.Count} items.");
         }
     }
 }

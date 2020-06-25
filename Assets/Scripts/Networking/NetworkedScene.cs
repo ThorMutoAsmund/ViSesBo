@@ -21,6 +21,14 @@ namespace Networking
     [RequireComponent(typeof(PhotonView))]
     public abstract class NetworkedScene : MonoBehaviourPunCallbacks
     {
+        public class SpawnedObject : MonoBehaviourPun
+        {
+            public string ResourceName { get; set; }
+            public Vector3 Position => this.transform.position;
+            public Quaternion Rotation => this.transform.rotation;
+            public int ViewID => this.photonView?.ViewID ?? 0;
+        }
+
         public static NetworkedScene NetworkSceneInstance { get; private set; }
 
         private Dictionary<string, Transform> dynamicTransformRoots = new Dictionary<string, Transform>();
@@ -132,7 +140,7 @@ namespace Networking
                 }
                 else
                 {
-                    Debug.LogWarning("Instantiated object has no PhotonView and will not be networked");
+                    Debug.LogWarning("== Instantiated object has no PhotonView and will not be networked.");
                 }
 
                 var networkedObject = gameObject.GetComponent<INetworkedObject>();
@@ -238,7 +246,7 @@ namespace Networking
 
                     if (this.transformFromHash.ContainsKey(hash))
                     {
-                        Debug.LogError($"HASHCLASH!! {NameWithPath(this.transformFromHash[hash].gameObject)} {path}");
+                        Debug.LogError($"== HASHCLASH!! {NameWithPath(this.transformFromHash[hash].gameObject)} {path}");
                     }
                     this.transformFromHash[hash] = t;
                     this.hashFromTransform[t] = hash;

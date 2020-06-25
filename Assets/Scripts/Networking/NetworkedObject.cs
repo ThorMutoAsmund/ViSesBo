@@ -34,7 +34,6 @@ namespace Networking
             UnityEngine.Object.Destroy(this.gameObject);
         }
 
-
         [PunRPC]
         public virtual void RpcFullStateSync(bool isWriting, Queue<object> dataQueue)
         {
