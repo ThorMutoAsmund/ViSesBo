@@ -300,7 +300,5 @@ namespace Networking
                 RemoveInstantiation(transform.GetChild(c));
             }
         }
-
-
     }
 }
