@@ -14,6 +14,7 @@ namespace VSB
     {
     #pragma warning disable 0649
         [SerializeField] private Text menuText;
+        [SerializeField] private Text statusText;
 #pragma warning restore 0649
 
         private RoomInfo[] RoomList => this.CachedRoomList.Values.ToArray();
@@ -30,6 +31,13 @@ namespace VSB
             if (!PhotonNetwork.InLobby)
             {
                 JoinLobbyWhenConnected();
+            }
+            else
+            {
+                if (this.statusText)
+                {
+                    this.statusText.text = $"Network: Connected";
+                }
             }
         }
 
@@ -205,6 +213,11 @@ namespace VSB
         {
             NetworkManager.Instance.WhenConnectedToMaster(this, () =>
             {
+                if (this.statusText)
+                {
+                    this.statusText.text = $"Network: Connected";
+                }
+
                 this.reconnectWhenDisconnected = true;
                 PhotonNetwork.JoinLobby();
             });
@@ -216,6 +229,11 @@ namespace VSB
             {
                 if (PhotonNetwork.NetworkClientState == ClientState.Disconnected)
                 {
+                    if (this.statusText)
+                    {
+                        this.statusText.text = "Network: Offline";
+                    }
+
                     this.CachedRoomList.Clear();
                     CreateGui();
 

@@ -2,8 +2,6 @@
 using Photon.Realtime;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -156,17 +154,22 @@ namespace Networking
 
         public void LoadScene(string sceneName)
         {
-            if (PhotonNetwork.IsMasterClient)
+            this.photonView.RPC(nameof(RpcForceLoadScene), RpcTarget.Others, sceneName);
+            PhotonNetwork.SendAllOutgoingCommands();
+            PhotonNetwork.IsMessageQueueRunning = false;
+            SceneManager.LoadSceneAsync(sceneName);
+        }
+
+        public bool CanLoadScene(string sceneName, out string reason)
+        {
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
             {
-                this.photonView.RPC(nameof(RpcForceLoadScene), RpcTarget.Others, sceneName);
-                PhotonNetwork.SendAllOutgoingCommands();
-                PhotonNetwork.IsMessageQueueRunning = false;
-                SceneManager.LoadSceneAsync(sceneName);
+                reason = $"Streamed level '{sceneName}' cannot be loaded";
+                return false;
             }
-            else
-            {
-                Debug.LogError("== Error loading scene. Not master client.");
-            }
+
+            reason = string.Empty;
+            return true;
         }
         
         [PunRPC]
@@ -276,6 +279,16 @@ namespace Networking
         public override void OnLeftRoom()
         {
             Debug.Log("== Left room.");
+        }
+
+        public override void OnPlayerEnteredRoom(Player newPlayer)
+        {
+            Debug.Log($"== Player {newPlayer.ActorNumber} entered room");
+        }
+
+        public override void OnPlayerLeftRoom(Player newPlayer)
+        {
+            Debug.Log($"== Player {newPlayer.ActorNumber} left room");
         }
 
         public override void OnMasterClientSwitched(Player newMasterClient)

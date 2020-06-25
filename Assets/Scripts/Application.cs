@@ -1,14 +1,6 @@
-﻿using Networking;
-using Photon.Pun;
+﻿using Photon.Pun;
 using Photon.Realtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace VSB
 {
@@ -35,6 +27,18 @@ namespace VSB
                     instance.ApplicationType = applicationType;
                 });
             }
+        }
+
+        public void CreateRoom(string roomName)
+        {
+            PhotonNetwork.CreateRoom(roomName, roomOptions: new RoomOptions()
+            {
+                MaxPlayers = 0,
+                PlayerTtl = 30000,
+                EmptyRoomTtl = 30000,
+                PublishUserId = true,
+                CleanupCacheOnLeave = true
+            });
         }
     }
 }

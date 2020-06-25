@@ -31,21 +31,15 @@ MonoBehaviour:
   RunInBackground: 1
   StartInOfflineMode: 0
   RpcList:
-  - RpcChangeScene
   - RpcDestroyObject
-  - RpcForceChangeScene
   - RpcForceLoadScene
+  - RpcFullStateSync
   - RpcInstantiate
   - RpcInstantiateOnMaster
-  - RpcOnAllSynced
-  - RpcSceneLoaded
-  - RpcSendFullState
-  - RpcSendPartialState
-  - RpcSpawnObjects
-  - RpcSyncState
-  - RpcTurnOn
   - RpcPartialStateSync
-  - RpcFullStateSync
+  - RpcSceneLoaded
+  - RpcSpawnObjects
+  - RpcTurnOn
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
